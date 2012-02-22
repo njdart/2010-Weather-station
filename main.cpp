@@ -67,54 +67,44 @@ void reset_RN_value() {
 //the buffer that will hold the text for writing to the .TXT document
 char Buffer[1024];
 
-//this defines what 'c' is, in this case the press of a key on the keybord. the value of c can be set EG.          if (c == 'y') { led1 = !led1 }
+//keyboard char
 char c;
 
-//Array to hold characters entered for the file name in write();
+//hold characters entered for the file name in write();
 char FileName[16];
 
-//Array to hold the option for Overwrite/Append/New
+//hold the option for Overwrite/Append/New
 char choice [1];
 
 FILE* fp;
 
 
-//the Sub-Routine that will recieve the
+//wind direction (arbitrary values, needs calibration)
 void Wind_dir () {
     Voltage = In1;
-//    pc.printf("Wind Direction ");
     printf(Buffer + strlen(Buffer), "Wind Direction ");
-    //Voltage  from Vein is refined
     if ((In1 >= 0.9375)||(In1 < 0.0625)) {
-//        pc.printf("North      at:");
         printf(Buffer + strlen(Buffer), "North      at:");
     }
     if ((In1 >= 0.0625)&&(In1 < 0.1875)) {
-//        pc.printf("North East at:");
         printf(Buffer + strlen(Buffer), "North East at:");
     }
     if ((In1 >= 0.1875)&&(In1 < 0.3125)) {
-//        pc.printf("East       at:");
         printf(Buffer + strlen(Buffer), "East       at:");
     }
     if ((In1 >= 0.341275)&&(In1 < 0.4375)) {
-//        pc.printf("South East at:");
         printf(Buffer + strlen(Buffer), "South East at:");
     }
     if ((In1 >= 0.4375)&&(In1 < 0.5625)) {
-//        pc.printf("South      at:");
         printf(Buffer + strlen(Buffer), "South      at:");
     }
     if ((In1 >= 0.5625)&&(In1 < 0.6875)) {
-//        pc.printf("South West at:");
         printf(Buffer + strlen(Buffer), "South West at:");
     }
     if ((In1 >= 0.6875)&&(In1 < 0.8125)) {
-//        pc.printf("West       at:");
         printf(Buffer + strlen(Buffer), "West       at:");
     }
     if ((In1 >= 0.8125)&&(In1 <= 0.9375)) {
-//        pc.printf("North West at:");
         printf(Buffer + strlen(Buffer), "North West at:");
     }
 }
@@ -122,51 +112,46 @@ void Wind_dir () {
 
 
 
-//the Sub0routine that will count the pulses from the wind "fan" and desplay that (a reset of this every second will give you the value in Meters per second) pulses clocked on the rise
+//count wind speed pulses (1 per rotation)
+//Reset of 1/second will give average per second
 void WindSpeed() {
-    //Meters per Second is calculated from wind speed pulses
-//    pc.printf(" %03dm/S  ", WSCounter.read());
     printf(Buffer + strlen(Buffer),"  %03dm/S  ", WSCounter.read());
-    //Wind Speed Counter is reset to 0
     WSCounter.reset();
 }
 
 
-//The Sub-routine that will count every pulse from the rain guage (the pulse being the fall of the bucket, and it being counted on the rise
+//raub gauge, same as above.
+//switch bounce caused problems here, suggest capacitor on input
 void RainGauge() {
     float RainFall=0.0;
     RainFall = RFCounter.read() * 0.2;
-//    pc.printf("Rain Fall per Hour: %03.1fmm ", RainFall);
     printf(Buffer + strlen(Buffer),"Rain Fall per Hour: %03.1fmm ",RainFall);
 }
 
 
 
 
-
-//the Sub-Routine that will recieve the infomation for the Humidity and change into a percentage
 void Humidity () {
     float humidity = 0.0;
+    //Magic code :) data sheet was inaccurate here, so i adjusted to fit current humidity
     humidity = ((Humid * 3.3) -1.60)/0.0312;
-    //pc.printf("Humidity: ");
     printf(Buffer + strlen(Buffer),"Humidity: ");
-    //pc.printf("%03.1f%% ", humidity);
     printf(Buffer + strlen(Buffer), "%04.1f%s",humidity,"%% ");
 }
 
 
 
-
-//The Sub-routine that will recieve the data for temperature and translate into a Degrees Celcius figure
 void Temperature () {
     float Temperature1 = 0.0;
+    //more magic code, Mbed 3.3 out is unstable, temp fluctuates alot, suggest alternate
+    //power supply
     Temperature1 = ((1000/Temp)-2005 )/4;
-//    pc.printf("temperature is %02.0f°C   ", Temperature1);
     printf(Buffer + strlen(Buffer), "temperature is %02.0f°C   ", Temperature1);
 }
 
 
-//The Sub-Routine that will write the content of "Buffer" into a text file on the micro SD card connected to the m-bed
+//write the content of "Buffer" into a text file on the micro SD card connected to the m-bed
+//through break-out-board
 void Choice () {
     int N=4;
     pc.printf("\r\n\r\nInput file name : ");
@@ -182,7 +167,7 @@ void Choice () {
     printf(&FileName[--N],".txt");
     pc.printf("\n\r%s\n\r", &FileName[0]);
     wait (0.5);
-    //Does it Exist?? Yes go to options no - create - Y/N??  Y -> Create and continue N-> Go to do
+    //Does it Exist? Yes go to options no - create - Y/N??  Y -> Create and continue N-> Go to do
     fp = fopen(&FileName[0], "r");
     if (!fp) {
         pc.printf("%s Doesn't Exist! Creating new file...\n\r", &FileName[0]);
@@ -206,7 +191,6 @@ void Choice () {
         }
     }
     pc.printf("\n\rFile opened successfuly\n\r\n\r\n\r\n\r");
-//    fprintf(fp, Buffer);
     fclose(fp);
 }
 
@@ -222,18 +206,15 @@ void Write () {
 //----------------------------------------
 
 int main() {
-    Choice();
-//    pc.printf("------------------------------------------------------------------------------------------------\r\n\r\n\r\n\r\n\r\n\r\n ----- M-BED Weather Monitoring -----\r\n\r\n");
-    printf(Buffer + strlen(Buffer), "------------------------------------------------------------------------------------------------\r\n\r\n\r\n\r\n\r\n\r\n ----- M-BED Weather Monitoring -----\r\n\r\n");
+    Choice();-
+    printf(Buffer + strlen(Buffer), "------------------------------------\r\n----- M-BED Weather Monitoring -----\r\n\r\n");
     while (1) {
         Wind_dir();
         WindSpeed();
         RainGauge();
         Humidity();
         Temperature();
-//        pc.printf("\r\n-----\r\n");
         printf(Buffer + strlen(Buffer), "\r\n-----\r\n");
-        // timeout.attach(&reset_RN_value, 3600.0);
         Write();
         wait(1.0);
     }
